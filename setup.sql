@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS enviroreadings(
     temperature FLOAT,
     humidity FLOAT,
     pressure FLOAT,
+    oxidising FLOAT,
+    reducing FLOAT,
     nh3 FLOAT,
     PM1 FLOAT,
     PM25 FLOAT,

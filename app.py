@@ -37,3 +37,24 @@ def submit_reading():
 	cur.close()
 	conn.close()
 
+@app.route('/api/readings')
+def get_readings():
+	conn = psycopg2.connect(**DB_CONFIG)
+	cur = conn.cursor()
+	cur.execute("SELECT timestamp, tempurature, humidity, pressure, oxidising, reducing, nh3, PM2.5  FROM environment")
+	rows = cur.fetchall()
+	cur.close()
+	conn.close()
+	data = []
+	for row in rows:
+		data.append({
+			"timestamp": row[0],
+			"tempurature": row[1],
+			"humidity": row[2],
+			"pressure": row[3],
+			"oxidising": row[4],
+			"reducing": row[5],
+			"nh3": row[6],
+			"PM2.5":row[7]
+		})
+	return jsonify(data)
