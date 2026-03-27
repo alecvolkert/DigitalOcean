@@ -1,0 +1,152 @@
+<body>
+    <head>
+        <title>Environmental Monitor</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    </head>
+    <body>
+        <div class="grid">
+            <div class="chart-card">
+                <h2>Temperature (°C)</h2>
+                <canvas id="temp-chart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h2>Humidity (%)</h2>
+                <canvas id="hum-chart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h2>Pressure (hPa)</h2>
+                <canvas id="press-chart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h2>Altitude (m)</h2>
+                <canvas id="alt-chart"></canvas>
+            </div>
+
+            <div class="chart-card full-width">
+                <h2>Particulate Matter (µg/m³)</h2>
+                <canvas id="pm-chart"></canvas>
+            </div>
+
+            <div class="chart-card full-width">
+                <h2>Gas Sensors (Ω)</h2>
+                <canvas id="gas-chart"></canvas>
+            </div>
+    </div>
+    <script>
+        Chart.defaults.color = '#888'
+    Chart.defaults.borderColor = '#333'
+
+    function getOptions(showLegend = false) {
+        return {
+            responsive: true,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: { unit: 'minute' },
+                    grid: { color: '#333' }
+                },
+                y: { grid: { color: '#333' } }
+            },
+            plugins: {
+                legend: { display: showLegend }
+            }
+        }
+    }
+
+    function createChart(canvasId, label, color) {
+        return new Chart(document.getElementById(canvasId), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: label,
+                    data: [],
+                    borderColor: color,
+                    backgroundColor: color + '22',
+                    tension: 0.3,
+                    pointRadius: 2,
+                    fill: true
+                }]
+            },
+            options: getOptions(false)
+        })
+    }
+
+    function createMultiChart(canvasId, datasets) {
+        return new Chart(document.getElementById(canvasId), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: datasets.map(d => ({
+                    label: d.label,
+                    data: [],
+                    borderColor: d.color,
+                    backgroundColor: d.color + '22',
+                    tension: 0.3,
+                    pointRadius: 2,
+                    fill: false
+                }))
+            },
+            options: getOptions(true)
+        })
+    }
+
+    const tempChart  = createChart('temp-chart',  'Temperature °C', '#ff6384')
+    const humChart   = createChart('hum-chart',   'Humidity %',     '#36a2eb')
+    const pressChart = createChart('press-chart', 'Pressure hPa',   '#4bc0c0')
+    const altChart   = createChart('alt-chart',   'Altitude m',     '#9966ff')
+
+    const pmChart = createMultiChart('pm-chart', [
+        { label: 'PM1.0', color: '#ff6384' },
+        { label: 'PM2.5', color: '#ffcd56' },
+        { label: 'PM10',  color: '#4bc0c0' }
+    ])
+
+    const gasChart = createMultiChart('gas-chart', [
+        { label: 'Oxidising', color: '#ff6384' },
+        { label: 'Reducing',  color: '#36a2eb' },
+        { label: 'NH3',       color: '#4bc0c0' }
+    ])
+
+    function updateChart(chart, labels, values) {
+        chart.data.labels = labels
+        chart.data.datasets[0].data = values
+        chart.update()
+    }
+
+    function updateAll() {
+        fetch('/api/readings')
+            .then(r => r.json())
+            .then(data => {
+                if (data.length === 0) return
+
+                const timestamps = data.map(r => r.timestamp)
+
+                updateChart(tempChart,  timestamps, data.map(r => r.temperature))
+                updateChart(humChart,   timestamps, data.map(r => r.humidity))
+                updateChart(pressChart, timestamps, data.map(r => (r.pressure / 100).toFixed(2)))
+                updateChart(altChart,   timestamps, data.map(r => r.altitude))
+
+                pmChart.data.labels = timestamps
+                pmChart.data.datasets[0].data = data.map(r => r.PM1)
+                pmChart.data.datasets[1].data = data.map(r => r.PM25)
+                pmChart.data.datasets[2].data = data.map(r => r.PM10)
+                pmChart.update()
+
+                gasChart.data.labels = timestamps
+                gasChart.data.datasets[0].data = data.map(r => r.oxidising)
+                gasChart.data.datasets[1].data = data.map(r => r.reducing)
+                gasChart.data.datasets[2].data = data.map(r => r.nh3)
+                gasChart.update()
+            })
+    }
+
+    updateAll()
+    setInterval(updateAll, 30000)
+    </script>
+    </body>
+</html>
