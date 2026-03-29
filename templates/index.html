@@ -6,167 +6,91 @@
     <title>Environmental Monitor</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg:         #1a1c2c;
-            --bg-card:    #16213e;
-            --bg-dark:    #0f0f23;
-            --pink:       #ff004d;
-            --yellow:     #ffec27;
-            --green:      #00e436;
-            --cyan:       #29adff;
-            --orange:     #ff6c24;
-            --purple:     #7e2553;
-            --white:      #fff1e8;
-            --grey:       #5f574f;
-            --border-px:  4px;
-            --font:       'Press Start 2P', monospace;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        html { image-rendering: pixelated; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background-color: var(--bg);
-            color: var(--white);
-            font-family: var(--font);
-            font-size: 8px;
-            line-height: 1.8;
-            min-height: 100vh;
-            /* pixel checkerboard background */
-            background-image:
-                radial-gradient(ellipse at 30% 20%, rgba(126,37,83,0.3) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 80%, rgba(41,173,255,0.15) 0%, transparent 50%);
-        }
-
-        /* pixel border mixin — chunky 4px solid borders with drop shadow */
-        .px-border {
-            border: var(--border-px) solid var(--white);
-            box-shadow:
-                4px 4px 0 var(--bg-dark),
-                inset -2px -2px 0 rgba(0,0,0,0.4),
-                inset 2px 2px 0 rgba(255,255,255,0.1);
+            background: #f8f9fa;
+            color: #1a1a1a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
         }
 
         .wrapper {
             max-width: 1300px;
             margin: 0 auto;
-            padding: 24px 16px 48px;
+            padding: 32px 20px 60px;
         }
 
-        /* ---- Header ---- */
         header {
             margin-bottom: 32px;
-            padding: 20px;
-            background: var(--purple);
-            border: var(--border-px) solid var(--white);
-            box-shadow: 6px 6px 0 var(--bg-dark);
-            position: relative;
-            overflow: hidden;
-        }
-
-        header::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: repeating-linear-gradient(
-                90deg,
-                transparent,
-                transparent 8px,
-                rgba(255,255,255,0.03) 8px,
-                rgba(255,255,255,0.03) 16px
-            );
-            pointer-events: none;
-        }
-
-        .site-title {
-            font-size: clamp(10px, 2.5vw, 18px);
-            color: var(--yellow);
-            text-shadow:
-                2px 2px 0 var(--pink),
-                4px 4px 0 rgba(0,0,0,0.5);
-            letter-spacing: 0.1em;
-            margin-bottom: 12px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
-            align-items: center;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
             gap: 12px;
         }
 
-        /* pixel sprite star */
-        .sprite {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            background:
-                linear-gradient(var(--yellow), var(--yellow)) 6px 0/4px 16px,
-                linear-gradient(var(--yellow), var(--yellow)) 0 6px/16px 4px;
-            animation: spin 4s steps(4) infinite;
-            flex-shrink: 0;
+        .site-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #111;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
         }
 
         .site-meta {
+            font-size: 12px;
+            color: #6b7280;
             display: flex;
-            flex-wrap: wrap;
             gap: 16px;
-            color: var(--cyan);
-            font-size: 7px;
-        }
-
-        .site-meta span {
-            background: var(--bg-dark);
-            padding: 4px 8px;
-            border: 2px solid var(--cyan);
+            flex-wrap: wrap;
         }
 
         /* ---- Summary cards ---- */
         .summary {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 12px;
             margin-bottom: 28px;
         }
 
         .summary-card {
-            background: var(--bg-card);
-            border: var(--border-px) solid var(--white);
-            box-shadow: 4px 4px 0 var(--bg-dark);
-            padding: 12px 10px;
-            position: relative;
-            transition: transform 0.1s;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 14px 12px;
         }
-
-        .summary-card:hover {
-            transform: translate(-2px, -2px);
-            box-shadow: 6px 6px 0 var(--bg-dark);
-        }
-
-        /* coloured top stripe per card */
-        .summary-card:nth-child(1) { border-top: var(--border-px) solid var(--pink); }
-        .summary-card:nth-child(2) { border-top: var(--border-px) solid var(--cyan); }
-        .summary-card:nth-child(3) { border-top: var(--border-px) solid var(--yellow); }
-        .summary-card:nth-child(4) { border-top: var(--border-px) solid var(--green); }
-        .summary-card:nth-child(5) { border-top: var(--border-px) solid var(--orange); }
-        .summary-card:nth-child(6) { border-top: var(--border-px) solid var(--pink); }
-        .summary-card:nth-child(7) { border-top: var(--border-px) solid var(--purple); }
 
         .summary-card .label {
-            font-size: 7px;
-            color: var(--grey);
-            margin-bottom: 8px;
+            font-size: 11px;
+            color: #9ca3af;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
         }
 
         .summary-card .value {
-            font-size: clamp(10px, 2vw, 14px);
-            color: var(--yellow);
-            text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+            font-size: 20px;
+            font-weight: 600;
+            color: #111;
         }
 
         /* ---- Charts grid ---- */
@@ -177,16 +101,10 @@
         }
 
         .chart-card {
-            background: var(--bg-card);
-            border: var(--border-px) solid var(--white);
-            box-shadow: 4px 4px 0 var(--bg-dark);
-            padding: 16px;
-            transition: transform 0.1s;
-        }
-
-        .chart-card:hover {
-            transform: translate(-2px, -2px);
-            box-shadow: 6px 6px 0 var(--bg-dark);
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
         }
 
         .chart-card.full-width {
@@ -194,50 +112,32 @@
         }
 
         .chart-card h2 {
-            font-size: 8px;
-            color: var(--cyan);
-            text-shadow: 1px 1px 0 var(--bg-dark);
-            margin-bottom: 14px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--grey);
-            letter-spacing: 0.08em;
+            font-size: 12px;
+            font-weight: 500;
+            color: #6b7280;
             text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            letter-spacing: 0.06em;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f3f4f6;
         }
 
-        /* pixel icon before each chart title */
-        .chart-card h2::before {
-            content: '▶';
-            color: var(--yellow);
-            font-size: 8px;
-        }
-
-        /* ---- Footer ---- */
         .last-updated {
             text-align: center;
-            color: var(--grey);
-            font-size: 7px;
+            color: #9ca3af;
+            font-size: 11px;
             margin-top: 24px;
-            padding-top: 14px;
-            border-top: 2px solid var(--grey);
-            letter-spacing: 0.08em;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
         }
 
-        /* ---- Scrollbar ---- */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb {
-            background: var(--purple);
-            border: 2px solid var(--white);
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f3f4f6; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 
-        /* ---- Mobile ---- */
         @media (max-width: 600px) {
             .summary { grid-template-columns: repeat(2, 1fr); }
-            .site-title { font-size: 9px; }
-            .chart-card { padding: 12px; }
+            header { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
@@ -246,43 +146,43 @@
 
     <header>
         <div class="site-title">
-            <span class="sprite"></span>
-            ENV MONITOR
+            <span class="status-dot"></span>
+            Environmental Monitor
         </div>
         <div class="site-meta">
-            <span>ARVADA CO</span>
-            <span>1650M</span>
-            <span id="last-updated">SYNCING...</span>
+            <span>Arvada, Colorado</span>
+            <span>1,650m elevation</span>
+            <span id="last-updated">Syncing...</span>
         </div>
     </header>
 
     <div class="summary">
         <div class="summary-card">
-            <div class="label">Temp °C</div>
+            <div class="label">Temperature</div>
             <div class="value" id="latest-temp">--</div>
         </div>
         <div class="summary-card">
-            <div class="label">Humidity %</div>
+            <div class="label">Humidity</div>
             <div class="value" id="latest-hum">--</div>
         </div>
         <div class="summary-card">
-            <div class="label">Pressure</div>
+            <div class="label">Pressure hPa</div>
             <div class="value" id="latest-press">--</div>
         </div>
         <div class="summary-card">
-            <div class="label">PM2.5</div>
+            <div class="label">PM2.5 µg/m³</div>
             <div class="value" id="latest-pm25">--</div>
         </div>
         <div class="summary-card">
-            <div class="label">Oxidising</div>
+            <div class="label">Oxidising Ω</div>
             <div class="value" id="latest-oxidising">--</div>
         </div>
         <div class="summary-card">
-            <div class="label">Reducing</div>
+            <div class="label">Reducing Ω</div>
             <div class="value" id="latest-reducing">--</div>
         </div>
         <div class="summary-card">
-            <div class="label">NH3</div>
+            <div class="label">NH3 Ω</div>
             <div class="value" id="latest-nh3">--</div>
         </div>
     </div>
@@ -314,13 +214,12 @@
         </div>
     </div>
 
-    <p class="last-updated" id="footer-updated">LAST SYNC: --</p>
+    <p class="last-updated" id="footer-updated">Last sync: --</p>
 
 </div>
-
 <script>
-    Chart.defaults.color = '#5f574f'
-    Chart.defaults.borderColor = '#3a3a5a'
+    Chart.defaults.color = '#9ca3af'
+    Chart.defaults.borderColor = '#f3f4f6'
 
     function getOptions(showLegend = false) {
         return {
@@ -329,18 +228,18 @@
                 x: {
                     type: 'time',
                     time: { unit: 'minute' },
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#5f574f', font: { family: "'Press Start 2P'", size: 6 } }
+                    grid: { color: '#f9fafb' },
+                    ticks: { color: '#9ca3af', font: { size: 11 } }
                 },
                 y: {
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#5f574f', font: { family: "'Press Start 2P'", size: 6 } }
+                    grid: { color: '#f9fafb' },
+                    ticks: { color: '#9ca3af', font: { size: 11 } }
                 }
             },
             plugins: {
                 legend: {
                     display: showLegend,
-                    labels: { color: '#fff1e8', font: { family: "'Press Start 2P'", size: 7 }, boxWidth: 12 }
+                    labels: { color: '#6b7280', font: { size: 11 }, boxWidth: 12 }
                 }
             }
         }
@@ -355,11 +254,10 @@
                     label: label,
                     data: [],
                     borderColor: color,
-                    backgroundColor: color + '22',
-                    tension: 0,
-                    pointRadius: 2,
-                    pointStyle: 'rect',
-                    borderWidth: 2,
+                    backgroundColor: color + '18',
+                    tension: 0.3,
+                    pointRadius: 1.5,
+                    borderWidth: 1.5,
                     fill: true
                 }]
             },
@@ -376,11 +274,10 @@
                     label: d.label,
                     data: [],
                     borderColor: d.color,
-                    backgroundColor: d.color + '18',
-                    tension: 0,
-                    pointRadius: 2,
-                    pointStyle: 'rect',
-                    borderWidth: 2,
+                    backgroundColor: d.color + '12',
+                    tension: 0.3,
+                    pointRadius: 1.5,
+                    borderWidth: 1.5,
                     fill: false
                 }))
             },
@@ -388,21 +285,21 @@
         })
     }
 
-    const tempChart  = createChart('temp-chart',  'Temperature °C', '#ff004d')
-    const humChart   = createChart('hum-chart',   'Humidity %',     '#29adff')
-    const pressChart = createChart('press-chart', 'Pressure hPa',   '#ffec27')
-    const altChart   = createChart('alt-chart',   'Altitude m',     '#00e436')
+    const tempChart  = createChart('temp-chart',  'Temperature °C', '#ef4444')
+    const humChart   = createChart('hum-chart',   'Humidity %',     '#3b82f6')
+    const pressChart = createChart('press-chart', 'Pressure hPa',   '#8b5cf6')
+    const altChart   = createChart('alt-chart',   'Altitude m',     '#10b981')
 
     const pmChart = createMultiChart('pm-chart', [
-        { label: 'PM1.0', color: '#29adff' },
-        { label: 'PM2.5', color: '#ffec27' },
-        { label: 'PM10',  color: '#ff004d' }
+        { label: 'PM1.0', color: '#3b82f6' },
+        { label: 'PM2.5', color: '#f59e0b' },
+        { label: 'PM10',  color: '#ef4444' }
     ])
 
     const gasChart = createMultiChart('gas-chart', [
-        { label: 'Oxidising', color: '#ff004d' },
-        { label: 'Reducing',  color: '#29adff' },
-        { label: 'NH3',       color: '#00e436' }
+        { label: 'Oxidising', color: '#ef4444' },
+        { label: 'Reducing',  color: '#3b82f6' },
+        { label: 'NH3',       color: '#10b981' }
     ])
 
     function updateChart(chart, labels, values) {
@@ -420,8 +317,8 @@
                 const timestamps = data.map(r => r.timestamp)
                 const latest = data[0]
 
-                document.getElementById('latest-temp').textContent      = latest.temperature?.toFixed(1) ?? '--'
-                document.getElementById('latest-hum').textContent       = latest.humidity?.toFixed(1) ?? '--'
+                document.getElementById('latest-temp').textContent      = (latest.temperature?.toFixed(1) ?? '--') + '°C'
+                document.getElementById('latest-hum').textContent       = (latest.humidity?.toFixed(1) ?? '--') + '%'
                 document.getElementById('latest-press').textContent     = ((latest.pressure ?? 0) / 100).toFixed(1)
                 document.getElementById('latest-pm25').textContent      = latest.PM25?.toFixed(1) ?? '--'
                 document.getElementById('latest-oxidising').textContent = latest.oxidising?.toFixed(0) ?? '--'
@@ -447,7 +344,7 @@
 
                 const time = new Date().toLocaleTimeString()
                 document.getElementById('last-updated').textContent = time
-                document.getElementById('footer-updated').textContent = 'LAST SYNC: ' + time
+                document.getElementById('footer-updated').textContent = 'Last sync: ' + time
             })
     }
 
