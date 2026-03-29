@@ -6,257 +6,238 @@
     <title>Environmental Monitor</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary:    #060a0f;
-            --bg-secondary:  #0a1018;
-            --bg-card:       #0d1520;
-            --bg-card-hover: #111d2b;
-            --border:        #1a3a5c;
-            --border-bright: #1e5f8a;
-            --text-primary:  #c8dff0;
-            --text-dim:      #4a7a9b;
-            --text-label:    #2a5a7a;
-            --accent-cyan:   #00d4ff;
-            --accent-green:  #00ff88;
-            --grid-line:     rgba(0, 212, 255, 0.05);
-            --scanline:      rgba(0, 212, 255, 0.02);
-            --font-mono:     'Share Tech Mono', monospace;
-            --font-display:  'Orbitron', monospace;
+            --bg:         #1a1c2c;
+            --bg-card:    #16213e;
+            --bg-dark:    #0f0f23;
+            --pink:       #ff004d;
+            --yellow:     #ffec27;
+            --green:      #00e436;
+            --cyan:       #29adff;
+            --orange:     #ff6c24;
+            --purple:     #7e2553;
+            --white:      #fff1e8;
+            --grey:       #5f574f;
+            --border-px:  4px;
+            --font:       'Press Start 2P', monospace;
         }
 
-        *, *::before, *::after {
-            margin: 0; padding: 0; box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { image-rendering: pixelated; }
 
         body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            font-size: 13px;
-            line-height: 1.6;
+            background-color: var(--bg);
+            color: var(--white);
+            font-family: var(--font);
+            font-size: 8px;
+            line-height: 1.8;
             min-height: 100vh;
-            overflow-x: hidden;
+            /* pixel checkerboard background */
             background-image:
-                repeating-linear-gradient(
-                    0deg,
-                    var(--scanline) 0px, var(--scanline) 1px,
-                    transparent 1px, transparent 3px
-                ),
-                radial-gradient(ellipse at 20% 50%, rgba(0,80,160,0.08) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 20%, rgba(0,160,80,0.05) 0%, transparent 50%);
+                radial-gradient(ellipse at 30% 20%, rgba(126,37,83,0.3) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(41,173,255,0.15) 0%, transparent 50%);
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image:
-                linear-gradient(var(--grid-line) 1px, transparent 1px),
-                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-            background-size: 40px 40px;
-            pointer-events: none;
-            z-index: 0;
+        /* pixel border mixin — chunky 4px solid borders with drop shadow */
+        .px-border {
+            border: var(--border-px) solid var(--white);
+            box-shadow:
+                4px 4px 0 var(--bg-dark),
+                inset -2px -2px 0 rgba(0,0,0,0.4),
+                inset 2px 2px 0 rgba(255,255,255,0.1);
         }
 
         .wrapper {
-            position: relative;
-            z-index: 1;
-            max-width: 1400px;
+            max-width: 1300px;
             margin: 0 auto;
             padding: 24px 16px 48px;
         }
 
         /* ---- Header ---- */
         header {
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 20px;
             margin-bottom: 32px;
+            padding: 20px;
+            background: var(--purple);
+            border: var(--border-px) solid var(--white);
+            box-shadow: 6px 6px 0 var(--bg-dark);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 8px,
+                rgba(255,255,255,0.03) 8px,
+                rgba(255,255,255,0.03) 16px
+            );
+            pointer-events: none;
         }
 
         .site-title {
-            font-family: var(--font-display);
-            font-size: clamp(1.2rem, 4vw, 2rem);
-            font-weight: 900;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--accent-cyan);
-            text-shadow: 0 0 20px rgba(0,212,255,0.6), 0 0 60px rgba(0,212,255,0.2);
-            margin-bottom: 10px;
+            font-size: clamp(10px, 2.5vw, 18px);
+            color: var(--yellow);
+            text-shadow:
+                2px 2px 0 var(--pink),
+                4px 4px 0 rgba(0,0,0,0.5);
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
-        .status-dot {
+        /* pixel sprite star */
+        .sprite {
             display: inline-block;
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: var(--accent-green);
-            box-shadow: 0 0 8px var(--accent-green);
-            animation: pulse 2s ease-in-out infinite;
+            width: 16px;
+            height: 16px;
+            background:
+                linear-gradient(var(--yellow), var(--yellow)) 6px 0/4px 16px,
+                linear-gradient(var(--yellow), var(--yellow)) 0 6px/16px 4px;
+            animation: spin 4s steps(4) infinite;
             flex-shrink: 0;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50%       { opacity: 0.4; transform: scale(0.7); }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .site-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 20px;
-            color: var(--text-dim);
-            font-size: 11px;
-            letter-spacing: 0.08em;
+            gap: 16px;
+            color: var(--cyan);
+            font-size: 7px;
         }
 
-        .site-meta span::before {
-            content: '▸ ';
-            color: var(--accent-cyan);
-            opacity: 0.5;
+        .site-meta span {
+            background: var(--bg-dark);
+            padding: 4px 8px;
+            border: 2px solid var(--cyan);
         }
 
         /* ---- Summary cards ---- */
         .summary {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 12px;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
         }
 
         .summary-card {
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-top: 2px solid var(--accent-cyan);
-            padding: 14px 12px;
+            border: var(--border-px) solid var(--white);
+            box-shadow: 4px 4px 0 var(--bg-dark);
+            padding: 12px 10px;
             position: relative;
-            transition: border-color 0.2s, background 0.2s;
-            clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+            transition: transform 0.1s;
         }
 
         .summary-card:hover {
-            background: var(--bg-card-hover);
-            border-color: var(--border-bright);
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 var(--bg-dark);
         }
 
-        .summary-card::after {
-            content: '';
-            position: absolute;
-            top: 0; right: 0;
-            width: 8px; height: 8px;
-            background: var(--accent-cyan);
-            clip-path: polygon(0 0, 100% 0, 100% 100%);
-            opacity: 0.4;
-        }
+        /* coloured top stripe per card */
+        .summary-card:nth-child(1) { border-top: var(--border-px) solid var(--pink); }
+        .summary-card:nth-child(2) { border-top: var(--border-px) solid var(--cyan); }
+        .summary-card:nth-child(3) { border-top: var(--border-px) solid var(--yellow); }
+        .summary-card:nth-child(4) { border-top: var(--border-px) solid var(--green); }
+        .summary-card:nth-child(5) { border-top: var(--border-px) solid var(--orange); }
+        .summary-card:nth-child(6) { border-top: var(--border-px) solid var(--pink); }
+        .summary-card:nth-child(7) { border-top: var(--border-px) solid var(--purple); }
 
         .summary-card .label {
-            font-size: 9px;
-            letter-spacing: 0.12em;
+            font-size: 7px;
+            color: var(--grey);
+            margin-bottom: 8px;
             text-transform: uppercase;
-            color: var(--text-label);
-            margin-bottom: 6px;
+            letter-spacing: 0.05em;
         }
 
         .summary-card .value {
-            font-family: var(--font-display);
-            font-size: clamp(1rem, 2.5vw, 1.4rem);
-            font-weight: 600;
-            color: var(--accent-cyan);
-            text-shadow: 0 0 12px rgba(0,212,255,0.4);
-            letter-spacing: 0.05em;
+            font-size: clamp(10px, 2vw, 14px);
+            color: var(--yellow);
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
         }
 
         /* ---- Charts grid ---- */
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
             gap: 16px;
         }
 
         .chart-card {
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            padding: 20px;
-            position: relative;
-            transition: border-color 0.2s;
+            border: var(--border-px) solid var(--white);
+            box-shadow: 4px 4px 0 var(--bg-dark);
+            padding: 16px;
+            transition: transform 0.1s;
         }
 
         .chart-card:hover {
-            border-color: var(--border-bright);
-        }
-
-        .chart-card::before,
-        .chart-card::after {
-            content: '';
-            position: absolute;
-            width: 12px; height: 12px;
-            border-color: var(--accent-cyan);
-            border-style: solid;
-            opacity: 0.4;
-        }
-
-        .chart-card::before {
-            top: -1px; left: -1px;
-            border-width: 2px 0 0 2px;
-        }
-
-        .chart-card::after {
-            bottom: -1px; right: -1px;
-            border-width: 0 2px 2px 0;
-        }
-
-        .chart-card h2 {
-            font-family: var(--font-display);
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .chart-card h2::before {
-            content: '';
-            display: inline-block;
-            width: 3px; height: 14px;
-            background: var(--accent-cyan);
-            box-shadow: 0 0 8px var(--accent-cyan);
-            flex-shrink: 0;
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 var(--bg-dark);
         }
 
         .chart-card.full-width {
             grid-column: 1 / -1;
         }
 
+        .chart-card h2 {
+            font-size: 8px;
+            color: var(--cyan);
+            text-shadow: 1px 1px 0 var(--bg-dark);
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--grey);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* pixel icon before each chart title */
+        .chart-card h2::before {
+            content: '▶';
+            color: var(--yellow);
+            font-size: 8px;
+        }
+
         /* ---- Footer ---- */
         .last-updated {
             text-align: center;
-            color: var(--text-label);
-            font-size: 10px;
-            letter-spacing: 0.1em;
+            color: var(--grey);
+            font-size: 7px;
             margin-top: 24px;
-            padding-top: 16px;
-            border-top: 1px solid var(--border);
+            padding-top: 14px;
+            border-top: 2px solid var(--grey);
+            letter-spacing: 0.08em;
         }
 
         /* ---- Scrollbar ---- */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-primary); }
-        ::-webkit-scrollbar-thumb { background: var(--border-bright); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb {
+            background: var(--purple);
+            border: 2px solid var(--white);
+        }
 
         /* ---- Mobile ---- */
         @media (max-width: 600px) {
             .summary { grid-template-columns: repeat(2, 1fr); }
-            .chart-card { padding: 14px; }
+            .site-title { font-size: 9px; }
+            .chart-card { padding: 12px; }
         }
     </style>
 </head>
@@ -265,43 +246,43 @@
 
     <header>
         <div class="site-title">
-            <span class="status-dot"></span>
-            Environmental Monitor
+            <span class="sprite"></span>
+            ENV MONITOR
         </div>
         <div class="site-meta">
-            <span>Arvada, Colorado</span>
-            <span>1650m Elevation</span>
-            <span id="last-updated">Syncing...</span>
+            <span>ARVADA CO</span>
+            <span>1650M</span>
+            <span id="last-updated">SYNCING...</span>
         </div>
     </header>
 
     <div class="summary">
         <div class="summary-card">
-            <div class="label">Temperature</div>
+            <div class="label">Temp °C</div>
             <div class="value" id="latest-temp">--</div>
         </div>
         <div class="summary-card">
-            <div class="label">Humidity</div>
+            <div class="label">Humidity %</div>
             <div class="value" id="latest-hum">--</div>
         </div>
         <div class="summary-card">
-            <div class="label">Pressure hPa</div>
+            <div class="label">Pressure</div>
             <div class="value" id="latest-press">--</div>
         </div>
         <div class="summary-card">
-            <div class="label">PM2.5 µg/m³</div>
+            <div class="label">PM2.5</div>
             <div class="value" id="latest-pm25">--</div>
         </div>
         <div class="summary-card">
-            <div class="label">Oxidising Ω</div>
+            <div class="label">Oxidising</div>
             <div class="value" id="latest-oxidising">--</div>
         </div>
         <div class="summary-card">
-            <div class="label">Reducing Ω</div>
+            <div class="label">Reducing</div>
             <div class="value" id="latest-reducing">--</div>
         </div>
         <div class="summary-card">
-            <div class="label">NH3 Ω</div>
+            <div class="label">NH3</div>
             <div class="value" id="latest-nh3">--</div>
         </div>
     </div>
@@ -338,8 +319,8 @@
 </div>
 
 <script>
-    Chart.defaults.color = '#4a7a9b'
-    Chart.defaults.borderColor = '#1a3a5c'
+    Chart.defaults.color = '#5f574f'
+    Chart.defaults.borderColor = '#3a3a5a'
 
     function getOptions(showLegend = false) {
         return {
@@ -348,18 +329,18 @@
                 x: {
                     type: 'time',
                     time: { unit: 'minute' },
-                    grid: { color: 'rgba(0,212,255,0.05)' },
-                    ticks: { color: '#2a5a7a', font: { family: 'Share Tech Mono' } }
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#5f574f', font: { family: "'Press Start 2P'", size: 6 } }
                 },
                 y: {
-                    grid: { color: 'rgba(0,212,255,0.05)' },
-                    ticks: { color: '#2a5a7a', font: { family: 'Share Tech Mono' } }
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#5f574f', font: { family: "'Press Start 2P'", size: 6 } }
                 }
             },
             plugins: {
                 legend: {
                     display: showLegend,
-                    labels: { color: '#4a7a9b', font: { family: 'Share Tech Mono', size: 11 } }
+                    labels: { color: '#fff1e8', font: { family: "'Press Start 2P'", size: 7 }, boxWidth: 12 }
                 }
             }
         }
@@ -374,10 +355,11 @@
                     label: label,
                     data: [],
                     borderColor: color,
-                    backgroundColor: color + '18',
-                    tension: 0.3,
-                    pointRadius: 1,
-                    borderWidth: 1.5,
+                    backgroundColor: color + '22',
+                    tension: 0,
+                    pointRadius: 2,
+                    pointStyle: 'rect',
+                    borderWidth: 2,
                     fill: true
                 }]
             },
@@ -395,9 +377,10 @@
                     data: [],
                     borderColor: d.color,
                     backgroundColor: d.color + '18',
-                    tension: 0.3,
-                    pointRadius: 1,
-                    borderWidth: 1.5,
+                    tension: 0,
+                    pointRadius: 2,
+                    pointStyle: 'rect',
+                    borderWidth: 2,
                     fill: false
                 }))
             },
@@ -405,21 +388,21 @@
         })
     }
 
-    const tempChart  = createChart('temp-chart',  'Temperature °C', '#00d4ff')
-    const humChart   = createChart('hum-chart',   'Humidity %',     '#00ff88')
-    const pressChart = createChart('press-chart', 'Pressure hPa',   '#ffaa00')
-    const altChart   = createChart('alt-chart',   'Altitude m',     '#9966ff')
+    const tempChart  = createChart('temp-chart',  'Temperature °C', '#ff004d')
+    const humChart   = createChart('hum-chart',   'Humidity %',     '#29adff')
+    const pressChart = createChart('press-chart', 'Pressure hPa',   '#ffec27')
+    const altChart   = createChart('alt-chart',   'Altitude m',     '#00e436')
 
     const pmChart = createMultiChart('pm-chart', [
-        { label: 'PM1.0', color: '#00d4ff' },
-        { label: 'PM2.5', color: '#ffaa00' },
-        { label: 'PM10',  color: '#ff3355' }
+        { label: 'PM1.0', color: '#29adff' },
+        { label: 'PM2.5', color: '#ffec27' },
+        { label: 'PM10',  color: '#ff004d' }
     ])
 
     const gasChart = createMultiChart('gas-chart', [
-        { label: 'Oxidising', color: '#ff3355' },
-        { label: 'Reducing',  color: '#00d4ff' },
-        { label: 'NH3',       color: '#00ff88' }
+        { label: 'Oxidising', color: '#ff004d' },
+        { label: 'Reducing',  color: '#29adff' },
+        { label: 'NH3',       color: '#00e436' }
     ])
 
     function updateChart(chart, labels, values) {
