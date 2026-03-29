@@ -1,77 +1,345 @@
-	<body>
-    <head>
-        <title>Environmental Monitor</title>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-	<link rel="stylesheet" href="style.css">   
- </head>
-    <body>
-	
-	<div class="summary">
-    <div class="summary-card">
-        <div class="value" id="latest-temp">--</div>
-        <div class="label">Temperature °C</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environmental Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary:    #060a0f;
+            --bg-secondary:  #0a1018;
+            --bg-card:       #0d1520;
+            --bg-card-hover: #111d2b;
+            --border:        #1a3a5c;
+            --border-bright: #1e5f8a;
+            --text-primary:  #c8dff0;
+            --text-dim:      #4a7a9b;
+            --text-label:    #2a5a7a;
+            --accent-cyan:   #00d4ff;
+            --accent-green:  #00ff88;
+            --grid-line:     rgba(0, 212, 255, 0.05);
+            --scanline:      rgba(0, 212, 255, 0.02);
+            --font-mono:     'Share Tech Mono', monospace;
+            --font-display:  'Orbitron', monospace;
+        }
+
+        *, *::before, *::after {
+            margin: 0; padding: 0; box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image:
+                repeating-linear-gradient(
+                    0deg,
+                    var(--scanline) 0px, var(--scanline) 1px,
+                    transparent 1px, transparent 3px
+                ),
+                radial-gradient(ellipse at 20% 50%, rgba(0,80,160,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(0,160,80,0.05) 0%, transparent 50%);
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px 16px 48px;
+        }
+
+        /* ---- Header ---- */
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 32px;
+        }
+
+        .site-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 20px rgba(0,212,255,0.6), 0 0 60px rgba(0,212,255,0.2);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse 2s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.4; transform: scale(0.7); }
+        }
+
+        .site-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            color: var(--text-dim);
+            font-size: 11px;
+            letter-spacing: 0.08em;
+        }
+
+        .site-meta span::before {
+            content: '▸ ';
+            color: var(--accent-cyan);
+            opacity: 0.5;
+        }
+
+        /* ---- Summary cards ---- */
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-top: 2px solid var(--accent-cyan);
+            padding: 14px 12px;
+            position: relative;
+            transition: border-color 0.2s, background 0.2s;
+            clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+        }
+
+        .summary-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-bright);
+        }
+
+        .summary-card::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 8px; height: 8px;
+            background: var(--accent-cyan);
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+            opacity: 0.4;
+        }
+
+        .summary-card .label {
+            font-size: 9px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-label);
+            margin-bottom: 6px;
+        }
+
+        .summary-card .value {
+            font-family: var(--font-display);
+            font-size: clamp(1rem, 2.5vw, 1.4rem);
+            font-weight: 600;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 12px rgba(0,212,255,0.4);
+            letter-spacing: 0.05em;
+        }
+
+        /* ---- Charts grid ---- */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+            gap: 16px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 20px;
+            position: relative;
+            transition: border-color 0.2s;
+        }
+
+        .chart-card:hover {
+            border-color: var(--border-bright);
+        }
+
+        .chart-card::before,
+        .chart-card::after {
+            content: '';
+            position: absolute;
+            width: 12px; height: 12px;
+            border-color: var(--accent-cyan);
+            border-style: solid;
+            opacity: 0.4;
+        }
+
+        .chart-card::before {
+            top: -1px; left: -1px;
+            border-width: 2px 0 0 2px;
+        }
+
+        .chart-card::after {
+            bottom: -1px; right: -1px;
+            border-width: 0 2px 2px 0;
+        }
+
+        .chart-card h2 {
+            font-family: var(--font-display);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-card h2::before {
+            content: '';
+            display: inline-block;
+            width: 3px; height: 14px;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 8px var(--accent-cyan);
+            flex-shrink: 0;
+        }
+
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* ---- Footer ---- */
+        .last-updated {
+            text-align: center;
+            color: var(--text-label);
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ---- Scrollbar ---- */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-bright); }
+
+        /* ---- Mobile ---- */
+        @media (max-width: 600px) {
+            .summary { grid-template-columns: repeat(2, 1fr); }
+            .chart-card { padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <header>
+        <div class="site-title">
+            <span class="status-dot"></span>
+            Environmental Monitor
+        </div>
+        <div class="site-meta">
+            <span>Arvada, Colorado</span>
+            <span>1650m Elevation</span>
+            <span id="last-updated">Syncing...</span>
+        </div>
+    </header>
+
+    <div class="summary">
+        <div class="summary-card">
+            <div class="label">Temperature</div>
+            <div class="value" id="latest-temp">--</div>
+        </div>
+        <div class="summary-card">
+            <div class="label">Humidity</div>
+            <div class="value" id="latest-hum">--</div>
+        </div>
+        <div class="summary-card">
+            <div class="label">Pressure hPa</div>
+            <div class="value" id="latest-press">--</div>
+        </div>
+        <div class="summary-card">
+            <div class="label">PM2.5 µg/m³</div>
+            <div class="value" id="latest-pm25">--</div>
+        </div>
+        <div class="summary-card">
+            <div class="label">Oxidising Ω</div>
+            <div class="value" id="latest-oxidising">--</div>
+        </div>
+        <div class="summary-card">
+            <div class="label">Reducing Ω</div>
+            <div class="value" id="latest-reducing">--</div>
+        </div>
+        <div class="summary-card">
+            <div class="label">NH3 Ω</div>
+            <div class="value" id="latest-nh3">--</div>
+        </div>
     </div>
-    <div class="summary-card">
-        <div class="value" id="latest-hum">--</div>
-        <div class="label">Humidity %</div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h2>Temperature (°C)</h2>
+            <canvas id="temp-chart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h2>Humidity (%)</h2>
+            <canvas id="hum-chart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h2>Pressure (hPa)</h2>
+            <canvas id="press-chart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h2>Altitude (m)</h2>
+            <canvas id="alt-chart"></canvas>
+        </div>
+        <div class="chart-card full-width">
+            <h2>Particulate Matter (µg/m³)</h2>
+            <canvas id="pm-chart"></canvas>
+        </div>
+        <div class="chart-card full-width">
+            <h2>Gas Sensors (Ω)</h2>
+            <canvas id="gas-chart"></canvas>
+        </div>
     </div>
-    <div class="summary-card">
-        <div class="value" id="latest-press">--</div>
-        <div class="label">Pressure hPa</div>
-    </div>
-    <div class="summary-card">
-        <div class="value" id="latest-pm25">--</div>
-        <div class="label">PM2.5 µg/m³</div>
-    </div>
-    <div class="summary-card">
-        <div class="value" id="latest-oxidising">--</div>
-        <div class="label">Oxidising Ω</div>
-    </div>
-    <div class="summary-card">
-        <div class="value" id="latest-reducing">--</div>
-        <div class="label">Reducing Ω</div>
-    </div>
-    <div class="summary-card">
-        <div class="value" id="latest-nh3">--</div>
-        <div class="label">NH3 Ω</div>
-    </div>
+
+    <p class="last-updated" id="footer-updated">LAST SYNC: --</p>
+
 </div>
 
-        <div class="grid">
-            <div class="chart-card">
-                <h2>Temperature (°C)</h2>
-                <canvas id="temp-chart"></canvas>
-            </div>
-
-            <div class="chart-card">
-                <h2>Humidity (%)</h2>
-                <canvas id="hum-chart"></canvas>
-            </div>
-
-            <div class="chart-card">
-                <h2>Pressure (hPa)</h2>
-                <canvas id="press-chart"></canvas>
-            </div>
-
-            <div class="chart-card">
-                <h2>Altitude (m)</h2>
-                <canvas id="alt-chart"></canvas>
-            </div>
-
-            <div class="chart-card full-width">
-                <h2>Particulate Matter (µg/m³)</h2>
-                <canvas id="pm-chart"></canvas>
-            </div>
-
-            <div class="chart-card full-width">
-                <h2>Gas Sensors (Ω)</h2>
-                <canvas id="gas-chart"></canvas>
-            </div>
-    </div>
-    <script>
-        Chart.defaults.color = '#888'
-    Chart.defaults.borderColor = '#333'
+<script>
+    Chart.defaults.color = '#4a7a9b'
+    Chart.defaults.borderColor = '#1a3a5c'
 
     function getOptions(showLegend = false) {
         return {
@@ -79,13 +347,20 @@
             scales: {
                 x: {
                     type: 'time',
-                    time: { unit: 'day' },
-                    grid: { color: '#333' }
+                    time: { unit: 'minute' },
+                    grid: { color: 'rgba(0,212,255,0.05)' },
+                    ticks: { color: '#2a5a7a', font: { family: 'Share Tech Mono' } }
                 },
-                y: { grid: { color: '#333' } }
+                y: {
+                    grid: { color: 'rgba(0,212,255,0.05)' },
+                    ticks: { color: '#2a5a7a', font: { family: 'Share Tech Mono' } }
+                }
             },
             plugins: {
-                legend: { display: showLegend }
+                legend: {
+                    display: showLegend,
+                    labels: { color: '#4a7a9b', font: { family: 'Share Tech Mono', size: 11 } }
+                }
             }
         }
     }
@@ -99,9 +374,10 @@
                     label: label,
                     data: [],
                     borderColor: color,
-                    backgroundColor: color + '22',
+                    backgroundColor: color + '18',
                     tension: 0.3,
-                    pointRadius: 2,
+                    pointRadius: 1,
+                    borderWidth: 1.5,
                     fill: true
                 }]
             },
@@ -118,9 +394,10 @@
                     label: d.label,
                     data: [],
                     borderColor: d.color,
-                    backgroundColor: d.color + '22',
+                    backgroundColor: d.color + '18',
                     tension: 0.3,
-                    pointRadius: 2,
+                    pointRadius: 1,
+                    borderWidth: 1.5,
                     fill: false
                 }))
             },
@@ -128,21 +405,21 @@
         })
     }
 
-    const tempChart  = createChart('temp-chart',  'Temperature °C', '#ff6384')
-    const humChart   = createChart('hum-chart',   'Humidity %',     '#36a2eb')
-    const pressChart = createChart('press-chart', 'Pressure hPa',   '#4bc0c0')
+    const tempChart  = createChart('temp-chart',  'Temperature °C', '#00d4ff')
+    const humChart   = createChart('hum-chart',   'Humidity %',     '#00ff88')
+    const pressChart = createChart('press-chart', 'Pressure hPa',   '#ffaa00')
     const altChart   = createChart('alt-chart',   'Altitude m',     '#9966ff')
 
     const pmChart = createMultiChart('pm-chart', [
-        { label: 'PM1.0', color: '#ff6384' },
-        { label: 'PM2.5', color: '#ffcd56' },
-        { label: 'PM10',  color: '#4bc0c0' }
+        { label: 'PM1.0', color: '#00d4ff' },
+        { label: 'PM2.5', color: '#ffaa00' },
+        { label: 'PM10',  color: '#ff3355' }
     ])
 
     const gasChart = createMultiChart('gas-chart', [
-        { label: 'Oxidising', color: '#ff6384' },
-        { label: 'Reducing',  color: '#36a2eb' },
-        { label: 'NH3',       color: '#4bc0c0' }
+        { label: 'Oxidising', color: '#ff3355' },
+        { label: 'Reducing',  color: '#00d4ff' },
+        { label: 'NH3',       color: '#00ff88' }
     ])
 
     function updateChart(chart, labels, values) {
@@ -158,6 +435,15 @@
                 if (data.length === 0) return
 
                 const timestamps = data.map(r => r.timestamp)
+                const latest = data[0]
+
+                document.getElementById('latest-temp').textContent      = latest.temperature?.toFixed(1) ?? '--'
+                document.getElementById('latest-hum').textContent       = latest.humidity?.toFixed(1) ?? '--'
+                document.getElementById('latest-press').textContent     = ((latest.pressure ?? 0) / 100).toFixed(1)
+                document.getElementById('latest-pm25').textContent      = latest.PM25?.toFixed(1) ?? '--'
+                document.getElementById('latest-oxidising').textContent = latest.oxidising?.toFixed(0) ?? '--'
+                document.getElementById('latest-reducing').textContent  = latest.reducing?.toFixed(0) ?? '--'
+                document.getElementById('latest-nh3').textContent       = latest.nh3?.toFixed(0) ?? '--'
 
                 updateChart(tempChart,  timestamps, data.map(r => r.temperature))
                 updateChart(humChart,   timestamps, data.map(r => r.humidity))
@@ -175,11 +461,15 @@
                 gasChart.data.datasets[1].data = data.map(r => r.reducing)
                 gasChart.data.datasets[2].data = data.map(r => r.nh3)
                 gasChart.update()
+
+                const time = new Date().toLocaleTimeString()
+                document.getElementById('last-updated').textContent = time
+                document.getElementById('footer-updated').textContent = 'LAST SYNC: ' + time
             })
     }
 
     updateAll()
     setInterval(updateAll, 30000)
-    </script>
-    </body>
+</script>
+</body>
 </html>
