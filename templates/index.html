@@ -1,10 +1,43 @@
-<body>
+	<body>
     <head>
         <title>Environmental Monitor</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-    </head>
+	<link rel="stylesheet" href="style.css">   
+ </head>
     <body>
+	
+	<div class="summary">
+    <div class="summary-card">
+        <div class="value" id="latest-temp">--</div>
+        <div class="label">Temperature °C</div>
+    </div>
+    <div class="summary-card">
+        <div class="value" id="latest-hum">--</div>
+        <div class="label">Humidity %</div>
+    </div>
+    <div class="summary-card">
+        <div class="value" id="latest-press">--</div>
+        <div class="label">Pressure hPa</div>
+    </div>
+    <div class="summary-card">
+        <div class="value" id="latest-pm25">--</div>
+        <div class="label">PM2.5 µg/m³</div>
+    </div>
+    <div class="summary-card">
+        <div class="value" id="latest-oxidising">--</div>
+        <div class="label">Oxidising Ω</div>
+    </div>
+    <div class="summary-card">
+        <div class="value" id="latest-reducing">--</div>
+        <div class="label">Reducing Ω</div>
+    </div>
+    <div class="summary-card">
+        <div class="value" id="latest-nh3">--</div>
+        <div class="label">NH3 Ω</div>
+    </div>
+</div>
+
         <div class="grid">
             <div class="chart-card">
                 <h2>Temperature (°C)</h2>
@@ -46,7 +79,7 @@
             scales: {
                 x: {
                     type: 'time',
-                    time: { unit: 'minute' },
+                    time: { unit: 'day' },
                     grid: { color: '#333' }
                 },
                 y: { grid: { color: '#333' } }
