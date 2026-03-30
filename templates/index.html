@@ -64,7 +64,6 @@
             flex-wrap: wrap;
         }
 
-        /* ---- Summary cards ---- */
         .summary {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -93,7 +92,6 @@
             color: #111;
         }
 
-        /* ---- Charts grid ---- */
         .charts-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
@@ -200,10 +198,6 @@
             <h2>Pressure (hPa)</h2>
             <canvas id="press-chart"></canvas>
         </div>
-        <div class="chart-card">
-            <h2>Altitude (m)</h2>
-            <canvas id="alt-chart"></canvas>
-        </div>
         <div class="chart-card full-width">
             <h2>Particulate Matter (µg/m³)</h2>
             <canvas id="pm-chart"></canvas>
@@ -288,7 +282,6 @@
     const tempChart  = createChart('temp-chart',  'Temperature °C', '#ef4444')
     const humChart   = createChart('hum-chart',   'Humidity %',     '#3b82f6')
     const pressChart = createChart('press-chart', 'Pressure hPa',   '#8b5cf6')
-    const altChart   = createChart('alt-chart',   'Altitude m',     '#10b981')
 
     const pmChart = createMultiChart('pm-chart', [
         { label: 'PM1.0', color: '#3b82f6' },
@@ -328,7 +321,6 @@
                 updateChart(tempChart,  timestamps, data.map(r => r.temperature))
                 updateChart(humChart,   timestamps, data.map(r => r.humidity))
                 updateChart(pressChart, timestamps, data.map(r => (r.pressure / 100).toFixed(2)))
-                updateChart(altChart,   timestamps, data.map(r => r.altitude))
 
                 pmChart.data.labels = timestamps
                 pmChart.data.datasets[0].data = data.map(r => r.PM1)
